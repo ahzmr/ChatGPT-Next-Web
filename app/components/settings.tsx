@@ -72,6 +72,7 @@ import {
   Stability,
   Iflytek,
   SAAS_CHAT_URL,
+  ChatGLM,
 } from "../constant";
 import { Prompt, SearchService, usePromptStore } from "../store/prompt";
 import { ErrorBoundary } from "./error";
@@ -84,6 +85,7 @@ import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
 import { TTSConfigList } from "./tts-config";
+import { RealtimeConfigList } from "./realtime-chat/realtime-config";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -1249,6 +1251,47 @@ export function Settings() {
     </>
   );
 
+  const chatglmConfigComponent = accessStore.provider ===
+    ServiceProvider.ChatGLM && (
+    <>
+      <ListItem
+        title={Locale.Settings.Access.ChatGLM.Endpoint.Title}
+        subTitle={
+          Locale.Settings.Access.ChatGLM.Endpoint.SubTitle +
+          ChatGLM.ExampleEndpoint
+        }
+      >
+        <input
+          aria-label={Locale.Settings.Access.ChatGLM.Endpoint.Title}
+          type="text"
+          value={accessStore.chatglmUrl}
+          placeholder={ChatGLM.ExampleEndpoint}
+          onChange={(e) =>
+            accessStore.update(
+              (access) => (access.chatglmUrl = e.currentTarget.value),
+            )
+          }
+        ></input>
+      </ListItem>
+      <ListItem
+        title={Locale.Settings.Access.ChatGLM.ApiKey.Title}
+        subTitle={Locale.Settings.Access.ChatGLM.ApiKey.SubTitle}
+      >
+        <PasswordInput
+          aria-label={Locale.Settings.Access.ChatGLM.ApiKey.Title}
+          value={accessStore.chatglmApiKey}
+          type="text"
+          placeholder={Locale.Settings.Access.ChatGLM.ApiKey.Placeholder}
+          onChange={(e) => {
+            accessStore.update(
+              (access) => (access.chatglmApiKey = e.currentTarget.value),
+            );
+          }}
+        />
+      </ListItem>
+    </>
+  );
+
   const stabilityConfigComponent = accessStore.provider ===
     ServiceProvider.Stability && (
     <>
@@ -1708,6 +1751,7 @@ export function Settings() {
                   {stabilityConfigComponent}
                   {lflytekConfigComponent}
                   {XAIConfigComponent}
+                  {chatglmConfigComponent}
                 </>
               )}
             </>
@@ -1771,7 +1815,18 @@ export function Settings() {
         {shouldShowPromptModal && (
           <UserPromptModal onClose={() => setShowPromptModal(false)} />
         )}
-
+        <List>
+          <RealtimeConfigList
+            realtimeConfig={config.realtimeConfig}
+            updateConfig={(updater) => {
+              const realtimeConfig = { ...config.realtimeConfig };
+              updater(realtimeConfig);
+              config.update(
+                (config) => (config.realtimeConfig = realtimeConfig),
+              );
+            }}
+          />
+        </List>
         <List>
           <TTSConfigList
             ttsConfig={config.ttsConfig}
